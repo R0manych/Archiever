@@ -1,0 +1,5 @@
+D:\Projects\ArchieverApp\ArchieverApp\bin\Debug\ArchieverApp.exe.config
+D:\Projects\ArchieverApp\ArchieverApp\bin\Debug\ArchieverApp.exe
+D:\Projects\ArchieverApp\ArchieverApp\bin\Debug\ArchieverApp.pdb
+D:\Projects\ArchieverApp\ArchieverApp\obj\Debug\ArchieverApp.exe
+D:\Projects\ArchieverApp\ArchieverApp\obj\Debug\ArchieverApp.pdb
