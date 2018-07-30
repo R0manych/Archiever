@@ -45,6 +45,8 @@ namespace ArchieverApp.GZip
 
         public bool IsSucceeded => _isSucceded;
 
+        public Exception ThreadException { get; set; }
+
         #endregion
 
         #region Constructors
@@ -67,6 +69,12 @@ namespace ArchieverApp.GZip
         public void Cancel()
         {
             _isCancelled = true;
+            foreach (var doneEvent in _doneEvents)
+            {
+                doneEvent.Set();
+            }
+            _fsReader.Close();
+            _fsWriter.Close();
         }
 
         protected virtual void SetDone(int i)
@@ -78,6 +86,12 @@ namespace ArchieverApp.GZip
                 _fsReader.Close();
                 _fsWriter.Close();
             }
+        }
+
+        public void ThrowException(Exception ex)
+        {
+            ThreadException = ex;
+            Cancel();
         }
 
         #endregion

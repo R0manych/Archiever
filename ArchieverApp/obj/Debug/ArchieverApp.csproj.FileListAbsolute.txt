@@ -3,3 +3,9 @@ D:\Projects\ArchieverApp\ArchieverApp\bin\Debug\ArchieverApp.exe
 D:\Projects\ArchieverApp\ArchieverApp\bin\Debug\ArchieverApp.pdb
 D:\Projects\ArchieverApp\ArchieverApp\obj\Debug\ArchieverApp.exe
 D:\Projects\ArchieverApp\ArchieverApp\obj\Debug\ArchieverApp.pdb
+C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\bin\Debug\ArchieverApp.exe.config
+C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\bin\Debug\ArchieverApp.exe
+C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\bin\Debug\ArchieverApp.pdb
+C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\obj\Debug\ArchieverApp.csprojResolveAssemblyReference.cache
+C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\obj\Debug\ArchieverApp.exe
+C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\obj\Debug\ArchieverApp.pdb

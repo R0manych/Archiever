@@ -16,6 +16,8 @@ namespace ArchieverApp
         {
             try
             {
+                args = new string[] {"compress", "D:\\large32", "D:\\large32.gz" };
+                Console.CancelKeyPress += new ConsoleCancelEventHandler(CancelKeyPress);
                 switch (args[0].ToLower())
                 {
                     case "compress":
@@ -46,6 +48,16 @@ namespace ArchieverApp
                 }
                 return 1;
             }
-        } 
+        }
+
+        static void CancelKeyPress(object sender, ConsoleCancelEventArgs _args)
+        {
+            if (_args.SpecialKey == ConsoleSpecialKey.ControlC)
+            {
+                Console.WriteLine("\nCancelling...");
+                _args.Cancel = true;
+                zipper.Cancel();
+            }
+        }
     }
 }
