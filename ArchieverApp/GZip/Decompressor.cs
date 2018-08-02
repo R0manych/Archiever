@@ -6,7 +6,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace ArchieverApp.GZip
 {
@@ -65,10 +64,10 @@ namespace ArchieverApp.GZip
                 else
                     return null;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _isCancelled = true;
-                throw;
+                ThrowException(new Exception("Error in reading thread", ex));
+                return null;
             }
         }
 
@@ -105,8 +104,8 @@ namespace ArchieverApp.GZip
             }
             catch (Exception ex)
             {
-                _isCancelled = true;
-                throw new Exception($"Error in thread number {i}. \n Error description: { ex.Message}", ex);
+                ThrowException(new Exception($"Error in decompressing thread number {i}. \n Error description: { ex.Message}", ex));
+                return;
             }
         }
 
@@ -121,10 +120,10 @@ namespace ArchieverApp.GZip
                 _fsWriter.Write(block.Buffer, 0, block.Buffer.Length);
             }
 
-            catch (Exception)
+            catch (Exception ex)
             {
-                _isCancelled = true;
-                throw;
+                ThrowException(new Exception("Error in writing thread", ex));
+                return;
             }
         }
 

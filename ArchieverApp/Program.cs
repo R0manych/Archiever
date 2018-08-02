@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ArchieverApp
 {
@@ -16,7 +15,7 @@ namespace ArchieverApp
         {
             try
             {
-                args = new string[] {"compress", "D:\\large32", "D:\\large32.gz" };
+                args = new string[] {"compress", "D:\\large32", "D:\\large35debug.gz" };
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(CancelKeyPress);
                 switch (args[0].ToLower())
                 {
