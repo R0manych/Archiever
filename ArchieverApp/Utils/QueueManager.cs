@@ -15,6 +15,12 @@ namespace ArchieverApp.Utils
 
         #endregion
 
+        #region Properties
+
+        public int Count => _queue.Count;
+
+        #endregion
+
         #region Methods
 
         public void Enqueue(ByteBlock block)
@@ -38,6 +44,9 @@ namespace ArchieverApp.Utils
         {
             lock (_queue)
             {
+                while (_queue.Count == 0 && !_isStopped)
+                    Monitor.Wait(_queue);
+
                 if (_queue.Count == 0)
                     return null;
 

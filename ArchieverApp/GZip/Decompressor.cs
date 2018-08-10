@@ -28,58 +28,49 @@ namespace ArchieverApp.GZip
 
         #region Methods
 
-        public override void Launch()
-        {
-            for (int i = 0; i < _threads; i++)
-            {
-                _doneEvents[i] = new ManualResetEvent(false);
-                ThreadPool.QueueUserWorkItem(Decompress, i);
-            }
-
-            WaitHandle.WaitAll(_doneEvents);
-
-            _isSucceded  = !_isCancelled;
-        }
-
-        private ByteBlock Read()
+        protected override void Read()
         {
             try
             {
-                if (_fsReader.Position < _fsReader.Length)
+                while (!_isCancelled)
                 {
-                    byte[] lengthBuffer = new byte[8];
-                    _fsReader.Read(lengthBuffer, 0, lengthBuffer.Length);
-                    var blockLength = BitConverter.ToInt32(lengthBuffer, 4);
-                    byte[] compressedData = new byte[blockLength];
-                    lengthBuffer.CopyTo(compressedData, 0);
+                    if (_fsReader.Position < _fsReader.Length)
+                    {
+                        byte[] lengthBuffer = new byte[8];
+                        _fsReader.Read(lengthBuffer, 0, lengthBuffer.Length);
+                        var blockLength = BitConverter.ToInt32(lengthBuffer, 4);
+                        byte[] compressedData = new byte[blockLength];
+                        lengthBuffer.CopyTo(compressedData, 0);
 
-                    _fsReader.Read(compressedData, 8, blockLength - 8);
-                    var dataSize = BitConverter.ToInt32(compressedData, blockLength - 4);
-                    byte[] lastBuffer = new byte[dataSize];
+                        _fsReader.Read(compressedData, 8, blockLength - 8);
+                        var dataSize = BitConverter.ToInt32(compressedData, blockLength - 4);
+                        byte[] lastBuffer = new byte[dataSize];
 
-                    var block = new ByteBlock(_counter, lastBuffer, compressedData);
-                    _counter++;
-                    return block;
+                        var block = new ByteBlock(_counter, lastBuffer, compressedData);
+                        _counter++;
+                        _queueReader.Enqueue(block);
+                    }
+                    else
+                    {
+                        _queueReader.Stop();
+                        _fsReader.Close();
+                        return;
+                    }
                 }
-                else
-                    return null;
             }
             catch (Exception ex)
             {
                 ThrowException(new Exception("Error in reading thread", ex));
-                return null;
             }
         }
 
-        private void Decompress(object i)
+        protected override void Compress(object i)
         {
             try
             {
-                while (true && !_isCancelled)
+                while (!_isCancelled)
                 {
-                    _mutexReader.WaitOne();
-                    var block = Read();
-                    _mutexReader.ReleaseMutex();
+                    var block = _queueReader.Dequeue();
 
                     if (block == null)
                     {
@@ -95,10 +86,7 @@ namespace ArchieverApp.GZip
                             var decompressedData = block.Buffer;
                             block = new ByteBlock(block.ID, decompressedData);
                             _queueWriter.Enqueue(block);                            
-                        }
-                        _mutexWriter.WaitOne();
-                        Write();
-                        _mutexWriter.ReleaseMutex();
+                        }                        
                     }
                 }
             }
@@ -109,17 +97,22 @@ namespace ArchieverApp.GZip
             }
         }
 
-        private void Write()
+        protected override void Write()
         {
             try
             {
-                var block = _queueWriter.Dequeue();
-                if (block == null)
-                    return;
+                while (!_isCancelled)
+                {
+                    var block = _queueWriter.Dequeue();
+                    if (block == null)
+                    {
+                        _fsWriter.Close();
+                        return;
+                    }
 
-                _fsWriter.Write(block.Buffer, 0, block.Buffer.Length);
+                    _fsWriter.Write(block.Buffer, 0, block.Buffer.Length);
+                }
             }
-
             catch (Exception ex)
             {
                 ThrowException(new Exception("Error in writing thread", ex));

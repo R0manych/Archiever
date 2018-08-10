@@ -15,7 +15,7 @@ namespace ArchieverApp
         {
             try
             {
-                args = new string[] {"compress", "D:\\large32", "D:\\large35debug.gz" };
+                //args = new string[] {"compress", "D:\\large32", "D:\\large32test10" };
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(CancelKeyPress);
                 switch (args[0].ToLower())
                 {

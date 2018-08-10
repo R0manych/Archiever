@@ -17,88 +17,83 @@ namespace ArchieverApp.GZip
 
         #endregion
 
-        #region Methods
+        #region Methods        
 
-        public override void Launch()
-        {
-            for (var i = 0; i < _threads; i++)
-            {
-                _doneEvents[i] = new ManualResetEvent(false);
-                ThreadPool.QueueUserWorkItem(Compress, i);
-            }
-
-            WaitHandle.WaitAll(_doneEvents);
-
-            _isSucceded = !_isCancelled;            
-        }
-
-        public byte[] Read()
+        protected override void Read()
         {
             try
             {
-                int bytesRead;
-                byte[] lastBuffer;
-
-                if (_fsReader.Position < _fsReader.Length && !_isCancelled)
+                while (!_isCancelled)
                 {
-                    if (_fsReader.Length - _fsReader.Position <= _blockSize)
+                    int bytesRead;
+                    byte[] lastBuffer;
+
+                    if (_fsReader.Position < _fsReader.Length)
                     {
-                        bytesRead = (int)(_fsReader.Length - _fsReader.Position);
+                        if (_queueReader.Count < _threads)
+                        {
+                            if (_fsReader.Length - _fsReader.Position <= _blockSize)
+                            {
+                                bytesRead = (int)(_fsReader.Length - _fsReader.Position);
+                            }
+                            else
+                            {
+                                bytesRead = _blockSize;
+                            }
+
+                            lastBuffer = new byte[bytesRead];
+                            _fsReader.Read(lastBuffer, 0, bytesRead);
+
+                            _queueReader.Enqueue(_blockManager.CreateByteBlock(lastBuffer));
+                        }
+                        else
+                        {
+                            Thread.Sleep(5);
+                        }
                     }
                     else
                     {
-                        bytesRead = _blockSize;
+                        _queueReader.Stop();
+                        _fsReader.Close();
+                        return;
                     }
-
-                    lastBuffer = new byte[bytesRead];
-                    _fsReader.Read(lastBuffer, 0, bytesRead);
-
-                    return lastBuffer;
                 }
-                else
-                    return null;
             }
             catch (Exception ex)
             {
                 ThrowException(new Exception("Error in reading thread", ex));
-                return null;
+                return;
             }
         }
 
-        private void Compress(object i)
+        protected override void Compress(object i)
         {
             try
             {
-                while (true && !_isCancelled)
+                while (!_isCancelled)
                 {
-                    _mutexReader.WaitOne();
-                    var buffer = Read();
-                    _mutexReader.ReleaseMutex();
+                    var block = _queueReader.Dequeue();
+                    if (block != null)
+                    {
+                        using (var ms = new MemoryStream())
+                        {
+                            using (var czs = new GZipStream(ms, CompressionMode.Compress))
+                            {
+                                czs.Write(block.Buffer, 0, block.Buffer.Length);
+                            }
 
-                    if (buffer == null)
+                            byte[] compressedData = ms.ToArray();
+
+                            var outdata = new ByteBlock(block.ID, compressedData);
+                            _queueWriter.Enqueue(outdata);
+                        }
+                    }
+                    else
                     {
                         SetDone((int)i);
                         return;
                     }
-                    var block = _blockManager.CreateByteBlock(buffer);
-
-                    using (var ms = new MemoryStream())
-                    {
-                        using (var czs = new GZipStream(ms, CompressionMode.Compress))
-                        {
-                            czs.Write(block.Buffer, 0, block.Buffer.Length);
-                        }
-
-                        byte[] compressedData = ms.ToArray();
-
-                        var outdata = new ByteBlock(block.ID, compressedData);
-                        _queueWriter.Enqueue(outdata);
-                    }
-                    _mutexWriter.WaitOne();
-                    Write();
-                    _mutexWriter.ReleaseMutex();
-                }                 
-                
+                }             
             }
             catch (Exception ex)
             {
@@ -107,16 +102,22 @@ namespace ArchieverApp.GZip
             }
         }
 
-        private void Write()
+        protected override void Write()
         {
             try
             {
-                var block = _queueWriter.Dequeue();
-                if (block == null)
-                    return;
+                while (!_isCancelled)
+                {
+                    var block = _queueWriter.Dequeue();
+                    if (block == null)
+                    {
+                        _fsWriter.Close();
+                        return;
+                    }
 
-                BitConverter.GetBytes(block.Buffer.Length).CopyTo(block.Buffer, 4);
-                _fsWriter.Write(block.Buffer, 0, block.Buffer.Length);
+                    BitConverter.GetBytes(block.Buffer.Length).CopyTo(block.Buffer, 4);
+                    _fsWriter.Write(block.Buffer, 0, block.Buffer.Length);
+                }
             }
             catch (Exception ex)
             {

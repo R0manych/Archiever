@@ -8,3 +8,4 @@ C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\bin\Debug\ArchieverA
 C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\bin\Debug\ArchieverApp.pdb
 C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\obj\Debug\ArchieverApp.exe
 C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\obj\Debug\ArchieverApp.pdb
+C:\Users\Роман\Documents\GitHub\Archiever\ArchieverApp\obj\Debug\ArchieverApp.csproj.CoreCompileInputs.cache

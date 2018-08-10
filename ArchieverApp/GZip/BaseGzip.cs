@@ -28,6 +28,7 @@ namespace ArchieverApp.GZip
         protected ManualResetEvent[] _doneEvents = new ManualResetEvent[_threads];
 
         protected QueueManager _queueWriter = new QueueManager();
+        protected QueueManager _queueReader = new QueueManager();
 
         protected static Mutex _mutexReader = new Mutex();
 
@@ -58,7 +59,30 @@ namespace ArchieverApp.GZip
 
         #region Methods
 
-        public abstract void Launch();
+        public void Launch()
+        {
+            var _reader = new Thread(new ThreadStart(Read));
+            _reader.Start();
+
+            for (var i = 0; i < _threads; i++)
+            {
+                _doneEvents[i] = new ManualResetEvent(false);
+                ThreadPool.QueueUserWorkItem(Compress, i);
+            }
+
+            var _writer = new Thread(new ThreadStart(Write));
+            _writer.Start();
+
+            _writer.Join();
+
+            _isSucceded = !_isCancelled;
+        }
+
+        protected abstract void Read();
+
+        protected abstract void Write();
+
+        protected abstract void Compress(object i);
 
         public int CallBackResult() => !_isCancelled && _isSucceded ? 0 : 1;
 
@@ -79,8 +103,7 @@ namespace ArchieverApp.GZip
             _finishedThreads++;
             if (_finishedThreads == _threads)
             {
-                _fsReader.Close();
-                _fsWriter.Close();
+                _queueWriter.Stop();
             }
         }
 
